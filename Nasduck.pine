@@ -6,18 +6,9 @@ signalLen = input.int(9,  "Signal EMA (Fast)")
 trendLen  = input.int(21, "Trend EMA (Slow)")
 volLen    = input.int(20, "Volume MA Length")
 
-//rsiLen    = input.int(14, "Momentum (RSI) Length")
-//adxLen    = input.int(14, "ADX / DMI Length")
-//adxThresh = input.int(25, "ADX Trend Strength Threshold")
-
 // --- CALCULATIONS ---
 emaSignal = ta.ema(close, signalLen)
 emaTrend  = ta.ema(close, trendLen)
-//rsiVal    = ta.rsi(close, rsiLen)
-
-//[diPlus, diMinus, adxVal] = ta.dmi(adxLen, adxLen)
-
-//trendStrong = adxVal > adxThresh
 
 volMA        = ta.sma(volume, volLen)
 volConfirmed = volume > volMA
@@ -28,8 +19,8 @@ aboveVwap = not useVwap or close > vwapVal
 belowVwap = not useVwap or close < vwapVal
 
 // Nasduck Logic: Cross + Momentum + ADX/DMI Confirmation
-longCondition  = ta.crossover(emaSignal, emaTrend)  and aboveVwap //and rsiVal > 50 and trendStrong and diPlus  > diMinus
-shortCondition = ta.crossunder(emaSignal, emaTrend) and belowVwap //and rsiVal < 50 and trendStrong and diMinus > diPlus
+longCondition  = ta.crossover(emaSignal, emaTrend)
+shortCondition = ta.crossunder(emaSignal, emaTrend)
 
 // --- PIVOT POINTS ---
 prevHigh  = request.security(syminfo.tickerid, "D", high[1],  lookahead=barmerge.lookahead_on)
@@ -81,9 +72,9 @@ if shortCondition
 // Volume confirmation dot
 plotshape(volConfirmed, style=shape.circle, location=location.bottom, color=color.new(color.teal, 40), size=size.tiny, title="Volume Confirmed", text="V")
 
+// VWAP bias — always visible, independent of signal
+vwapBiasColor = useVwap ? (close > vwapVal ? color.new(color.green, 20) : color.new(color.red, 20)) : color.new(color.gray, 60)
+plotshape(true, style=shape.circle, location=location.top, color=vwapBiasColor, size=size.tiny, title="VWAP Bias")
+
 // Background "Heat" (Current State)
 bgcolor(emaSignal > emaTrend ? color.new(color.green, 95) : color.new(color.red, 95))
-
-// ADX / DMI plots (separate pane values shown as labels on chart)
-//plotshape(trendStrong and diPlus  > diMinus, style=shape.circle, location=location.belowbar, color=color.new(color.green, 60), size=size.tiny, title="+DI Dominant")
-//plotshape(trendStrong and diMinus > diPlus,  style=shape.circle, location=location.abovebar, color=color.new(color.red, 60),   size=size.tiny, title="-DI Dominant")
