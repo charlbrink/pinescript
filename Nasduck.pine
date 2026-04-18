@@ -9,6 +9,7 @@ volLen    = input.int(20, "Volume MA Length")
 // --- CALCULATIONS ---
 emaSignal = ta.ema(close, signalLen)
 emaTrend  = ta.ema(close, trendLen)
+rsi       = ta.rsi(close, 14)
 
 volMA        = ta.sma(volume, volLen)
 volConfirmed = volume > volMA
@@ -19,8 +20,15 @@ aboveVwap = not useVwap or close > vwapVal
 belowVwap = not useVwap or close < vwapVal
 
 // Nasduck Logic: Cross + Momentum + ADX/DMI Confirmation
-longCondition  = ta.crossover(emaSignal, emaTrend)
-shortCondition = ta.crossunder(emaSignal, emaTrend)
+crossUp   = ta.crossover(emaSignal, emaTrend)
+crossDown = ta.crossunder(emaSignal, emaTrend)
+
+longCondition  = crossUp   and rsi > 50
+shortCondition = crossDown and rsi < 50
+
+// Weak/choppy crossovers — RSI does not confirm
+weakLong  = crossUp   and rsi <= 50
+weakShort = crossDown and rsi >= 50
 
 // --- PIVOT POINTS ---
 prevHigh  = request.security(syminfo.tickerid, "D", high[1],  lookahead=barmerge.lookahead_on)
@@ -63,11 +71,17 @@ plot(useVwap ? vwapVal : na, "VWAP", color=color.new(color.purple, 0), linewidth
 // Signal Plots
 plotshape(longCondition,  style=shape.triangleup,   location=location.belowbar, color=color.green, size=size.small, title="NASDUCK Buy")
 plotshape(shortCondition, style=shape.triangledown, location=location.abovebar, color=color.red,   size=size.small, title="NASDUCK Sell")
+plotshape(weakLong,       style=shape.triangleup,   location=location.belowbar, color=color.gray,  size=size.small, title="Weak Buy")
+plotshape(weakShort,      style=shape.triangledown, location=location.abovebar, color=color.gray,  size=size.small, title="Weak Sell")
 
 if longCondition
     label.new(bar_index, high, "BUY ▲ " + str.tostring(close, format.mintick), style=label.style_label_down, color=color.new(color.green, 80), textcolor=color.white, size=size.small)
 if shortCondition
     label.new(bar_index, high, "SELL ▼ " + str.tostring(close, format.mintick), style=label.style_label_down, color=color.new(color.red,   80), textcolor=color.white, size=size.small)
+if weakLong
+    label.new(bar_index, low,  "WEAK ▲ " + str.tostring(close, format.mintick), style=label.style_label_up,   color=color.new(color.gray,  70), textcolor=color.white, size=size.tiny)
+if weakShort
+    label.new(bar_index, high, "WEAK ▼ " + str.tostring(close, format.mintick), style=label.style_label_down, color=color.new(color.gray,  70), textcolor=color.white, size=size.tiny)
 
 // Volume confirmation dot
 plotshape(volConfirmed, style=shape.circle, location=location.bottom, color=color.new(color.teal, 40), size=size.tiny, title="Volume Confirmed", text="V")
