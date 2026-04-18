@@ -4,22 +4,32 @@ indicator("NASDUCK Reddit Indicator Set", overlay=true)
 // --- INPUTS ---
 signalLen = input.int(9,  "Signal EMA (Fast)")
 trendLen  = input.int(21, "Trend EMA (Slow)")
-rsiLen    = input.int(14, "Momentum (RSI) Length")
-adxLen    = input.int(14, "ADX / DMI Length")
-adxThresh = input.int(25, "ADX Trend Strength Threshold")
+volLen    = input.int(20, "Volume MA Length")
+
+//rsiLen    = input.int(14, "Momentum (RSI) Length")
+//adxLen    = input.int(14, "ADX / DMI Length")
+//adxThresh = input.int(25, "ADX Trend Strength Threshold")
 
 // --- CALCULATIONS ---
 emaSignal = ta.ema(close, signalLen)
 emaTrend  = ta.ema(close, trendLen)
-rsiVal    = ta.rsi(close, rsiLen)
+//rsiVal    = ta.rsi(close, rsiLen)
 
-[diPlus, diMinus, adxVal] = ta.dmi(adxLen, adxLen)
+//[diPlus, diMinus, adxVal] = ta.dmi(adxLen, adxLen)
 
-trendStrong = adxVal > adxThresh
+//trendStrong = adxVal > adxThresh
+
+volMA        = ta.sma(volume, volLen)
+volConfirmed = volume > volMA
+
+useVwap  = timeframe.in_seconds() < timeframe.in_seconds("1D")
+vwapVal  = ta.vwap(close)
+aboveVwap = not useVwap or close > vwapVal
+belowVwap = not useVwap or close < vwapVal
 
 // Nasduck Logic: Cross + Momentum + ADX/DMI Confirmation
-longCondition  = ta.crossover(emaSignal, emaTrend)  //and rsiVal > 50 and trendStrong and diPlus  > diMinus
-shortCondition = ta.crossunder(emaSignal, emaTrend) //and rsiVal < 50 and trendStrong and diMinus > diPlus
+longCondition  = ta.crossover(emaSignal, emaTrend)  and aboveVwap //and rsiVal > 50 and trendStrong and diPlus  > diMinus
+shortCondition = ta.crossunder(emaSignal, emaTrend) and belowVwap //and rsiVal < 50 and trendStrong and diMinus > diPlus
 
 // --- VISUALS ---
 // Plotting the "Ribbon"
@@ -30,13 +40,24 @@ p2 = plot(emaTrend,  "Slow EMA", color=color.new(color.orange, 0), linewidth=2)
 fillColor = emaSignal > emaTrend ? color.new(color.green, 85) : color.new(color.red, 85)
 fill(p1, p2, fillColor, title="Trend Ribbon")
 
+// VWAP line (intraday only)
+plot(useVwap ? vwapVal : na, "VWAP", color=color.new(color.purple, 0), linewidth=1)
+
 // Signal Plots
-plotshape(longCondition,  style=shape.triangleup,   location=location.belowbar, color=color.green, size=size.small, title="NASDUCK Buy",  text="BUY")
-plotshape(shortCondition, style=shape.triangledown, location=location.abovebar, color=color.red,   size=size.small, title="NASDUCK Sell", text="SELL")
+plotshape(longCondition,  style=shape.triangleup,   location=location.belowbar, color=color.green, size=size.small, title="NASDUCK Buy")
+plotshape(shortCondition, style=shape.triangledown, location=location.abovebar, color=color.red,   size=size.small, title="NASDUCK Sell")
+
+if longCondition
+    label.new(bar_index, high, "BUY ▲ " + str.tostring(close, format.mintick), style=label.style_label_down, color=color.new(color.green, 80), textcolor=color.white, size=size.small)
+if shortCondition
+    label.new(bar_index, high, "SELL ▼ " + str.tostring(close, format.mintick), style=label.style_label_down, color=color.new(color.red,   80), textcolor=color.white, size=size.small)
+
+// Volume confirmation dot
+plotshape(volConfirmed, style=shape.circle, location=location.bottom, color=color.new(color.teal, 40), size=size.tiny, title="Volume Confirmed", text="V")
 
 // Background "Heat" (Current State)
 bgcolor(emaSignal > emaTrend ? color.new(color.green, 95) : color.new(color.red, 95))
 
 // ADX / DMI plots (separate pane values shown as labels on chart)
-plotshape(trendStrong and diPlus  > diMinus, style=shape.circle, location=location.belowbar, color=color.new(color.green, 60), size=size.tiny, title="+DI Dominant")
-plotshape(trendStrong and diMinus > diPlus,  style=shape.circle, location=location.abovebar, color=color.new(color.red, 60),   size=size.tiny, title="-DI Dominant")
+//plotshape(trendStrong and diPlus  > diMinus, style=shape.circle, location=location.belowbar, color=color.new(color.green, 60), size=size.tiny, title="+DI Dominant")
+//plotshape(trendStrong and diMinus > diPlus,  style=shape.circle, location=location.abovebar, color=color.new(color.red, 60),   size=size.tiny, title="-DI Dominant")
