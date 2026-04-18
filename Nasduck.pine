@@ -1,0 +1,42 @@
+//@version=5
+indicator("NASDUCK Reddit Indicator Set", overlay=true)
+
+// --- INPUTS ---
+signalLen = input.int(9,  "Signal EMA (Fast)")
+trendLen  = input.int(21, "Trend EMA (Slow)")
+rsiLen    = input.int(14, "Momentum (RSI) Length")
+adxLen    = input.int(14, "ADX / DMI Length")
+adxThresh = input.int(25, "ADX Trend Strength Threshold")
+
+// --- CALCULATIONS ---
+emaSignal = ta.ema(close, signalLen)
+emaTrend  = ta.ema(close, trendLen)
+rsiVal    = ta.rsi(close, rsiLen)
+
+[diPlus, diMinus, adxVal] = ta.dmi(adxLen, adxLen)
+
+trendStrong = adxVal > adxThresh
+
+// Nasduck Logic: Cross + Momentum + ADX/DMI Confirmation
+longCondition  = ta.crossover(emaSignal, emaTrend)  //and rsiVal > 50 and trendStrong and diPlus  > diMinus
+shortCondition = ta.crossunder(emaSignal, emaTrend) //and rsiVal < 50 and trendStrong and diMinus > diPlus
+
+// --- VISUALS ---
+// Plotting the "Ribbon"
+p1 = plot(emaSignal, "Fast EMA", color=color.new(color.aqua, 0),   linewidth=2)
+p2 = plot(emaTrend,  "Slow EMA", color=color.new(color.orange, 0), linewidth=2)
+
+// Fill the space between EMAs to show trend strength
+fillColor = emaSignal > emaTrend ? color.new(color.green, 85) : color.new(color.red, 85)
+fill(p1, p2, fillColor, title="Trend Ribbon")
+
+// Signal Plots
+plotshape(longCondition,  style=shape.triangleup,   location=location.belowbar, color=color.green, size=size.small, title="NASDUCK Buy",  text="BUY")
+plotshape(shortCondition, style=shape.triangledown, location=location.abovebar, color=color.red,   size=size.small, title="NASDUCK Sell", text="SELL")
+
+// Background "Heat" (Current State)
+bgcolor(emaSignal > emaTrend ? color.new(color.green, 95) : color.new(color.red, 95))
+
+// ADX / DMI plots (separate pane values shown as labels on chart)
+plotshape(trendStrong and diPlus  > diMinus, style=shape.circle, location=location.belowbar, color=color.new(color.green, 60), size=size.tiny, title="+DI Dominant")
+plotshape(trendStrong and diMinus > diPlus,  style=shape.circle, location=location.abovebar, color=color.new(color.red, 60),   size=size.tiny, title="-DI Dominant")
