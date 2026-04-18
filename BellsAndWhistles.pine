@@ -1,5 +1,5 @@
 //@version=5
-indicator("NASDUCK Reddit Indicator Set", overlay=true)
+indicator("Bells and Whistles Indicator Set", overlay=true)
 
 // --- INPUTS ---
 signalLen = input.int(9,  "Signal EMA (Fast)")
@@ -23,7 +23,6 @@ vwapVal  = ta.vwap(close)
 aboveVwap = not useVwap or close > vwapVal
 belowVwap = not useVwap or close < vwapVal
 
-// Nasduck Logic: Cross + Momentum + ADX/DMI Confirmation
 crossUp   = ta.crossover(emaSignal, emaTrend)
 crossDown = ta.crossunder(emaSignal, emaTrend)
 
@@ -82,8 +81,8 @@ plot(bbLower, "BB Lower", color=color.new(color.gray, 50), linewidth=1)
 plot(useVwap ? vwapVal : na, "VWAP", color=color.new(color.purple, 0), linewidth=1)
 
 // Signal Plots
-plotshape(longCondition,  style=shape.triangleup,   location=location.belowbar, color=color.green, size=size.small, title="NASDUCK Buy")
-plotshape(shortCondition, style=shape.triangledown, location=location.abovebar, color=color.red,   size=size.small, title="NASDUCK Sell")
+plotshape(longCondition,  style=shape.triangleup,   location=location.belowbar, color=color.green, size=size.small, title="Buy")
+plotshape(shortCondition, style=shape.triangledown, location=location.abovebar, color=color.red,   size=size.small, title="Sell")
 plotshape(weakLong,       style=shape.triangleup,   location=location.belowbar, color=color.gray,  size=size.small, title="Weak Buy")
 plotshape(weakShort,      style=shape.triangledown, location=location.abovebar, color=color.gray,  size=size.small, title="Weak Sell")
 

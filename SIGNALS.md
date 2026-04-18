@@ -1,4 +1,4 @@
-# Signal Reference — NASDUCK Indicator
+# Signal Reference — BellsAndWhistles Indicator
 
 A breakdown of every technical component used in the indicator, what it measures, and how it contributes to signal quality.
 
