@@ -12,6 +12,14 @@ emaTrend  = ta.ema(close, trendLen)
 rsi       = ta.rsi(close, 14)
 [macdLine, macdSignal, macdHist] = ta.macd(close, 12, 26, 9)
 
+// ADX / DMI
+[diPlus, diMinus, adx] = ta.dmi(14, 14)
+adxTrending  = adx > 25
+adxBullish   = adxTrending and diPlus > diMinus
+adxBearish   = adxTrending and diMinus > diPlus
+dmiCrossUp   = ta.crossover(diPlus,  diMinus) and adxTrending
+dmiCrossDown = ta.crossunder(diPlus, diMinus) and adxTrending
+
 // Bollinger Bands
 [bbUpper, bbMid, bbLower] = ta.bb(close, 20, 2)
 
@@ -101,6 +109,19 @@ plotshape(volConfirmed, style=shape.circle, location=location.bottom, color=colo
 // VWAP bias — always visible, independent of signal
 vwapBiasColor = useVwap ? (close > vwapVal ? color.new(color.green, 20) : color.new(color.red, 20)) : color.new(color.gray, 60)
 plotshape(true, style=shape.circle, location=location.top, color=vwapBiasColor, size=size.tiny, title="VWAP Bias")
+
+// ADX/DMI — Option 1: directional strength dot (top row)
+adxDotColor = adxBullish ? color.new(color.green, 20) : adxBearish ? color.new(color.red, 20) : color.new(color.gray, 40)
+plotshape(true, style=shape.circle, location=location.abovebar, color=adxDotColor, size=size.tiny, title="ADX/DMI Bias")
+
+// ADX/DMI — Option 3: +DI/-DI crossover squares (only when ADX > 25)
+plotshape(dmiCrossUp,   style=shape.xcross, location=location.belowbar, color=color.new(color.green, 20), size=size.small, title="DMI Cross Up")
+plotshape(dmiCrossDown, style=shape.xcross, location=location.abovebar, color=color.new(color.red,   20), size=size.small, title="DMI Cross Down")
+
+// ADX/DMI — Option 4: live ADX readout label
+if barstate.islast
+    adxLabelColor = adx > 25 ? color.green : adx > 20 ? color.yellow : color.red
+    label.new(bar_index + 2, high, "ADX: " + str.tostring(adx, "#.0"), style=label.style_label_left, color=color.new(adxLabelColor, 70), textcolor=color.white, size=size.tiny)
 
 // Background "Heat" (Current State)
 bgcolor(emaSignal > emaTrend ? color.new(color.green, 95) : color.new(color.red, 95))
