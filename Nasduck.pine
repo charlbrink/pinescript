@@ -31,6 +31,32 @@ belowVwap = not useVwap or close < vwapVal
 longCondition  = ta.crossover(emaSignal, emaTrend)  and aboveVwap //and rsiVal > 50 and trendStrong and diPlus  > diMinus
 shortCondition = ta.crossunder(emaSignal, emaTrend) and belowVwap //and rsiVal < 50 and trendStrong and diMinus > diPlus
 
+// --- PIVOT POINTS ---
+prevHigh  = request.security(syminfo.tickerid, "D", high[1],  lookahead=barmerge.lookahead_on)
+prevLow   = request.security(syminfo.tickerid, "D", low[1],   lookahead=barmerge.lookahead_on)
+prevClose = request.security(syminfo.tickerid, "D", close[1], lookahead=barmerge.lookahead_on)
+
+pp = (prevHigh + prevLow + prevClose) / 3
+r1 = (2 * pp) - prevLow
+r2 = pp + (prevHigh - prevLow)
+s1 = (2 * pp) - prevHigh
+s2 = pp - (prevHigh - prevLow)
+
+newDay = ta.change(time("D"))
+
+pivotLine(level, col, txt) =>
+    if newDay
+        line.delete(line.new(bar_index, level, bar_index, level))
+    if barstate.islast
+        ln = line.new(bar_index - 500, level, bar_index, level, extend=extend.right, color=col, width=1, style=line.style_dashed)
+        label.new(bar_index, level, txt + " " + str.tostring(level, format.mintick), style=label.style_label_left, color=color.new(col, 70), textcolor=color.white, size=size.tiny)
+
+pivotLine(pp, color.yellow, "PP")
+pivotLine(r1, color.red,    "R1")
+pivotLine(r2, color.red,    "R2")
+pivotLine(s1, color.green,  "S1")
+pivotLine(s2, color.green,  "S2")
+
 // --- VISUALS ---
 // Plotting the "Ribbon"
 p1 = plot(emaSignal, "Fast EMA", color=color.new(color.aqua, 0),   linewidth=2)
