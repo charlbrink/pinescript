@@ -21,7 +21,7 @@ dmiCrossUp   = ta.crossover(diPlus,  diMinus) and adxTrending
 dmiCrossDown = ta.crossunder(diPlus, diMinus) and adxTrending
 
 // Bollinger Bands
-[bbUpper, bbMid, bbLower] = ta.bb(close, 20, 2)
+[bbMid, bbUpper, bbLower] = ta.bb(close, 20, 2)
 
 volMA        = ta.sma(volume, volLen)
 volConfirmed = volume > volMA
@@ -81,9 +81,9 @@ fillColor = emaSignal > emaTrend ? color.new(color.green, 65) : color.new(color.
 fill(p1, p2, fillColor, title="Trend Ribbon")
 
 // Bollinger Bands
-plot(bbUpper, "BB Upper", color=color.new(color.gray, 50), linewidth=1)
-plot(bbMid,   "BB Mid",   color=color.new(color.gray, 50), linewidth=1, style=plot.style_circles)
-plot(bbLower, "BB Lower", color=color.new(color.gray, 50), linewidth=1)
+plot(bbUpper, "BB Upper", color=color.silver, linewidth=1, style=plot.style_line)
+plot(bbMid,   "BB Mid",   color=color.yellow, linewidth=1, style=plot.style_line)
+plot(bbLower, "BB Lower", color=color.silver, linewidth=1, style=plot.style_line)
 
 // VWAP line (intraday only)
 plot(useVwap ? vwapVal : na, "VWAP", color=color.new(color.purple, 0), linewidth=1)
