@@ -121,11 +121,13 @@ var float slShortLevel = na
 if longCondition
     slLongLevel  := close - atrStop
     slShortLevel := na
-    line.new(bar_index, slLongLevel,  bar_index + 5, slLongLevel,  color=color.red,   width=2, style=line.style_dashed)
+    sl = line.new(bar_index, slLongLevel,  bar_index + 5, slLongLevel,  color=color.red,   width=2, style=line.style_solid)
+    label.new(bar_index, slLongLevel,  "SL", style=label.style_label_right, color=color.new(color.red,   60), textcolor=labelTxtColor, size=size.tiny)
 if shortCondition
     slShortLevel := close + atrStop
     slLongLevel  := na
-    line.new(bar_index, slShortLevel, bar_index + 5, slShortLevel, color=color.green, width=2, style=line.style_dashed)
+    sl = line.new(bar_index, slShortLevel, bar_index + 5, slShortLevel, color=color.green, width=2, style=line.style_solid)
+    label.new(bar_index, slShortLevel, "SL", style=label.style_label_right, color=color.new(color.green, 60), textcolor=labelTxtColor, size=size.tiny)
 
 if longCondition
     label.new(bar_index, high, "BUY ▲ " + str.tostring(close, format.mintick) + "  SL: " + str.tostring(slLongLevel, format.mintick), style=label.style_label_down, color=color.new(color.green, 80), textcolor=labelTxtColor, size=size.small)
