@@ -5,6 +5,8 @@ indicator("Bells and Whistles Indicator Set", overlay=true)
 signalLen = input.int(9,  "Signal EMA (Fast)")
 trendLen  = input.int(21, "Trend EMA (Slow)")
 volLen    = input.int(20, "Volume MA Length")
+atrMult       = input.float(2.0, "ATR Stop Multiplier", step=0.5)
+lightTheme    = input.bool(false, "Light Theme")
 
 // --- CALCULATIONS ---
 emaSignal = ta.ema(close, signalLen)
@@ -27,8 +29,12 @@ obvHigh        = ta.highest(obv, 20)
 priceMadeHigh  = close >= ta.highest(close, 20)
 obvDivBearish  = priceMadeHigh and obv < obvHigh[1]
 
+// ATR Stop Loss (daily)
+atrDaily = request.security(syminfo.tickerid, "D", ta.atr(14))
+atrStop  = atrDaily * atrMult
+
 // Bollinger Bands
-[bbMid, bbUpper, bbLower] = ta.bb(close, 20, 2)
+[bbUpper, bbMid, bbLower] = ta.bb(close, 20, 2)
 
 volMA        = ta.sma(volume, volLen)
 volConfirmed = volume > volMA
@@ -103,15 +109,33 @@ plotshape(shortCondition, style=shape.triangledown, location=location.abovebar, 
 plotshape(weakLong,       style=shape.triangleup,   location=location.belowbar, color=color.gray,  size=size.small, title="Weak Buy")
 plotshape(weakShort,      style=shape.triangledown, location=location.abovebar, color=color.gray,  size=size.small, title="Weak Sell")
 
+// ATR stop levels — persist until next signal
+var float slLongLevel  = na
+var float slShortLevel = na
+
 if longCondition
-    label.new(bar_index, high, "BUY ▲ " + str.tostring(close, format.mintick), style=label.style_label_down, color=color.new(color.green, 80), textcolor=color.white, size=size.small)
+    slLongLevel  := close - atrStop
+    slShortLevel := na
+    line.new(bar_index, slLongLevel,  bar_index + 5, slLongLevel,  color=color.red,   width=2, style=line.style_dashed)
 if shortCondition
-    label.new(bar_index, high, "SELL ▼ " + str.tostring(close, format.mintick), style=label.style_label_down, color=color.new(color.red,   80), textcolor=color.white, size=size.small)
+    slShortLevel := close + atrStop
+    slLongLevel  := na
+    line.new(bar_index, slShortLevel, bar_index + 5, slShortLevel, color=color.green, width=2, style=line.style_dashed)
+
+labelTxtColor = lightTheme ? color.black : color.white
+
+if longCondition
+    label.new(bar_index, high, "BUY ▲ " + str.tostring(close, format.mintick) + "  SL: " + str.tostring(slLongLevel, format.mintick), style=label.style_label_down, color=color.new(color.green, 80), textcolor=labelTxtColor, size=size.small)
+if shortCondition
+    label.new(bar_index, high, "SELL ▼ " + str.tostring(close, format.mintick) + "  SL: " + str.tostring(slShortLevel, format.mintick), style=label.style_label_down, color=color.new(color.red, 80), textcolor=labelTxtColor, size=size.small)
 if weakLong
     cautionTxt = mfiOverbought ? "CAUTION ▲" : "WEAK ▲"
-    label.new(bar_index, low,  cautionTxt + " " + str.tostring(close, format.mintick), style=label.style_label_up,   color=color.new(color.gray,  70), textcolor=color.white, size=size.tiny)
+    label.new(bar_index, low,  cautionTxt + " " + str.tostring(close, format.mintick), style=label.style_label_up,   color=color.new(color.gray, 70), textcolor=labelTxtColor, size=size.tiny)
 if weakShort
-    label.new(bar_index, high, "WEAK ▼ "   + str.tostring(close, format.mintick), style=label.style_label_down, color=color.new(color.gray,  70), textcolor=color.white, size=size.tiny)
+    label.new(bar_index, high, "WEAK ▼ "   + str.tostring(close, format.mintick), style=label.style_label_down, color=color.new(color.gray, 70), textcolor=labelTxtColor, size=size.tiny)
+
+plot(slLongLevel,  "SL Long",  color=na)
+plot(slShortLevel, "SL Short", color=na)
 
 // Volume confirmation dot
 plotshape(volConfirmed, style=shape.circle, location=location.bottom, color=color.new(color.teal, 40), size=size.tiny, title="Volume Confirmed", text="V")
