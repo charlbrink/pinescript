@@ -7,12 +7,14 @@ A breakdown of every technical component used in the indicator, what it measures
 ## Table of Contents
 1. [EMA — Fast & Slow](#1-ema--fast--slow)
 2. [RSI — Momentum Oscillator](#2-rsi--momentum-oscillator)
-3. [MACD — Trend Momentum](#3-macd--trend-momentum)
-4. [Bollinger Bands — Volatility Context](#4-bollinger-bands--volatility-context)
-5. [Volume — Participation Filter](#5-volume--participation-filter)
-6. [VWAP — Intraday Bias](#6-vwap--intraday-bias)
-7. [Pivot Points — Support & Resistance](#7-pivot-points--support--resistance)
-8. [ADX & DMI — Trend Strength & Direction](#8-adx--dmi--trend-strength--direction)
+3. [MFI — Money Flow Index](#3-mfi--money-flow-index)
+4. [MACD — Trend Momentum](#4-macd--trend-momentum)
+5. [Bollinger Bands — Volatility Context](#5-bollinger-bands--volatility-context)
+6. [Volume — Participation Filter](#6-volume--participation-filter)
+7. [VWAP — Intraday Bias](#7-vwap--intraday-bias)
+8. [Pivot Points — Support & Resistance](#8-pivot-points--support--resistance)
+9. [ADX & DMI — Trend Strength & Direction](#9-adx--dmi--trend-strength--direction)
+10. [OBV — On Balance Volume](#10-obv--on-balance-volume)
 
 ---
 
@@ -93,7 +95,59 @@ RSI acts as a momentum gate on EMA crossovers:
 
 ---
 
-## 3. MACD — Trend Momentum
+## 3. MFI — Money Flow Index
+
+MFI is often called the "volume-weighted RSI." It combines both price and volume into a single 0–100 oscillator, making it a stronger momentum filter than RSI alone.
+
+**How it's calculated**
+
+```
+Typical price  = (high + low + close) / 3
+Money flow     = typical price × volume
+Positive flow  = money flow on bars where typical price > previous typical price
+Negative flow  = money flow on bars where typical price < previous typical price
+MFI            = 100 − (100 / (1 + positive flow / negative flow))  over 14 periods
+```
+
+**Key levels**
+
+| Level | Meaning |
+|---|---|
+| > 80 | Overbought — buying pressure may be exhausted |
+| < 20 | Oversold — selling pressure may be exhausted |
+| > 50 | Bullish money flow dominant |
+| < 50 | Bearish money flow dominant |
+
+**How it differs from RSI**
+
+| | RSI | MFI |
+|---|---|---|
+| Input | Price only | Price + volume |
+| Overbought at | 70 | 80 |
+| Oversold at | 30 | 20 |
+| Volume weighted | No | Yes |
+
+Because MFI incorporates volume, an overbought reading on high volume carries more weight than the same reading on low volume — RSI cannot make this distinction.
+
+**Common strategies**
+- **Overbought/oversold** — MFI > 80 signals buying exhaustion, < 20 signals selling exhaustion. More reliable than RSI in this role because volume confirms the move
+- **50 crossover** — MFI crossing above 50 confirms money is flowing in, below 50 confirms outflow. Can replace or sit alongside RSI > 50 as a momentum gate
+- **Divergence** — price makes higher high, MFI makes lower high = smart money not participating in the move despite price rising
+- **Failure at extremes** — MFI reaches > 80 then fails to reclaim it on the next push = exhaustion signal, similar to RSI failure swings
+
+**In the context of this indicator**
+- MFI > 50 is a stronger momentum gate than RSI > 50 alone because it requires volume to confirm the directional move
+- MFI overbought (> 80) on a buy signal = caution, entering into potential exhaustion
+- Combining MFI + RSI both above 50 gives a high-confidence momentum confirmation
+
+**Limitations**
+- Lags — based on a lookback period of past bars
+- In low-volume environments (pre-market, thin instruments) the volume weighting can produce misleading readings
+- Like RSI, can stay overbought/oversold for extended periods in strong trends
+
+---
+
+## 4. MACD — Trend Momentum
 
 MACD (Moving Average Convergence Divergence) is a trend-following momentum indicator built from three components:
 
@@ -134,7 +188,7 @@ The histogram is often more useful than the crossover itself. When it starts shr
 
 ---
 
-## 4. Bollinger Bands — Volatility Context
+## 5. Bollinger Bands — Volatility Context
 
 Bollinger Bands are a volatility envelope — three lines plotted around price.
 
@@ -165,7 +219,7 @@ Plotted as a visual reference only — not used to gate signals. The bands show 
 
 ---
 
-## 5. Volume — Participation Filter
+## 6. Volume — Participation Filter
 
 Volume confirms whether real money is behind a move.
 
@@ -186,7 +240,7 @@ Volume confirms whether real money is behind a move.
 
 ---
 
-## 6. VWAP — Intraday Bias
+## 7. VWAP — Intraday Bias
 
 VWAP (Volume Weighted Average Price) is the average price paid for every share traded that session, weighted by volume. It resets each day.
 
@@ -213,7 +267,7 @@ Price above VWAP means institutions have been buying all day and are sitting on 
 
 ---
 
-## 7. Pivot Points — Support & Resistance
+## 8. Pivot Points — Support & Resistance
 
 Pivot points are price levels calculated from the previous session's high, low, and close. A classic tool used by floor traders and institutions to identify where price is likely to find support or resistance.
 
@@ -245,7 +299,7 @@ Pivot levels add a **location quality** layer — not just *is the trend right* 
 
 ---
 
-## 8. ADX & DMI — Trend Strength & Direction
+## 9. ADX & DMI — Trend Strength & Direction
 
 ADX and DMI are derived from the same calculation and are always used together.
 
@@ -282,3 +336,43 @@ ADX is derived from the DMI calculation — they're inseparable:
 A +DI/−DI cross with low ADX is noise. The same cross with ADX > 25 is a meaningful directional signal.
 
 > DMI tells you **which way** the market is moving. ADX tells you **how much to trust it**.
+
+---
+
+## 10. OBV — On Balance Volume
+
+OBV is a cumulative running total of volume, based on the direction of each close:
+- Close **up** from previous bar → volume is **added**
+- Close **down** from previous bar → volume is **subtracted**
+
+The result is a single line that rises when buying volume dominates and falls when selling volume dominates.
+
+**The core idea**
+Volume precedes price. Smart money accumulates or distributes before price moves — OBV picks this up before the price chart does. A rising OBV means buyers are absorbing supply even if price hasn't moved yet.
+
+**How it's used**
+
+| Signal | Meaning |
+|---|---|
+| Price rising + OBV rising | Healthy trend — real buying behind the move |
+| Price rising + OBV flat/falling | Distribution — move is suspect, smart money selling into strength |
+| Price falling + OBV falling | Healthy downtrend — real selling pressure |
+| Price falling + OBV flat/rising | Accumulation — sellers exhausted, potential reversal |
+
+**Common strategies**
+- **Trend confirmation** — OBV should trend in the same direction as price. When they diverge, the price move is likely unsustainable
+- **Divergence** — most powerful use of OBV
+  - *Bearish:* price makes new high, OBV fails to make new high → buyers fading, distribution underway
+  - *Bullish:* price makes new low, OBV fails to make new low → sellers exhausted, accumulation underway
+- **Breakout confirmation** — OBV breaking above a prior high before price does = early signal a price breakout is coming
+
+**In the context of this indicator**
+- OBV divergence can flag weak signals — price making a new high but OBV isn't confirms the move lacks conviction
+- Pairs well with the existing volume dot — volume dot confirms single-bar participation, OBV confirms the cumulative trend of participation over time
+
+**Limitations**
+- The absolute value of OBV is meaningless — only direction and divergence from price matter
+- One abnormally large volume day can distort the line for many bars
+- Does not account for where price closed within the bar — a close up 0.01% adds the full bar's volume, same as a close up 5%
+
+> OBV answers the question: *is volume confirming what price is doing, or quietly telling a different story?*

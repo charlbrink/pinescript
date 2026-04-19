@@ -20,6 +20,12 @@ adxBearish   = adxTrending and diMinus > diPlus
 dmiCrossUp   = ta.crossover(diPlus,  diMinus) and adxTrending
 dmiCrossDown = ta.crossunder(diPlus, diMinus) and adxTrending
 
+// OBV
+obv            = ta.obv
+obvHigh        = ta.highest(obv, 20)
+priceMadeHigh  = close >= ta.highest(close, 20)
+obvDivBearish  = priceMadeHigh and obv < obvHigh[1]
+
 // Bollinger Bands
 [bbMid, bbUpper, bbLower] = ta.bb(close, 20, 2)
 
@@ -38,11 +44,12 @@ crossDown = ta.crossunder(emaSignal, emaTrend)
 macdLong  = macdLine > macdSignal and macdHist > 0
 macdShort = macdLine < macdSignal and macdHist < 0
 
-longCondition  = crossUp   and rsi > 50 and macdLong
+// Strong only when RSI + MACD confirm AND no OBV bearish divergence
+longCondition  = crossUp   and rsi > 50 and macdLong  and not obvDivBearish
 shortCondition = crossDown and rsi < 50 and macdShort
 
-// Weak — either RSI or MACD fails to confirm
-weakLong  = crossUp   and not (rsi > 50 and macdLong)
+// Weak — RSI/MACD fail OR OBV divergence detected on a long
+weakLong  = crossUp   and not (rsi > 50 and macdLong) or (crossUp and obvDivBearish)
 weakShort = crossDown and not (rsi < 50 and macdShort)
 
 // --- PIVOT POINTS ---
