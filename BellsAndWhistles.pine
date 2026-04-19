@@ -37,7 +37,7 @@ atrDaily = request.security(syminfo.tickerid, "D", ta.atr(14))
 atrStop  = atrDaily * atrMult
 
 // Bollinger Bands
-[bbUpper, bbMid, bbLower] = ta.bb(close, 20, 2)
+[bbMid, bbUpper, bbLower] = ta.bb(close, 20, 2)
 
 volMA        = ta.sma(volume, volLen)
 volConfirmed = volume > volMA
@@ -46,6 +46,8 @@ useVwap  = timeframe.in_seconds() < timeframe.in_seconds("1D")
 vwapVal  = ta.vwap(close)
 aboveVwap = not useVwap or close > vwapVal
 belowVwap = not useVwap or close < vwapVal
+
+labelTxtColor = lightTheme ? color.black : color.white
 
 crossUp   = ta.crossover(emaSignal, emaTrend)
 crossDown = ta.crossunder(emaSignal, emaTrend)
@@ -81,7 +83,7 @@ pivotLine(level, col, txt) =>
         line.delete(line.new(bar_index, level, bar_index, level))
     if barstate.islast
         ln = line.new(bar_index - 500, level, bar_index, level, extend=extend.right, color=col, width=1, style=line.style_dashed)
-        label.new(bar_index, level, txt + " " + str.tostring(level, format.mintick), style=label.style_label_left, color=color.new(col, 70), textcolor=color.white, size=size.tiny)
+        label.new(bar_index, level, txt + " " + str.tostring(level, format.mintick), style=label.style_label_left, color=color.new(col, 70), textcolor=labelTxtColor, size=size.tiny)
 
 pivotLine(pp, color.yellow, "PP")
 pivotLine(r1, color.red,    "R1")
@@ -124,8 +126,6 @@ if shortCondition
     slShortLevel := close + atrStop
     slLongLevel  := na
     line.new(bar_index, slShortLevel, bar_index + 5, slShortLevel, color=color.green, width=2, style=line.style_dashed)
-
-labelTxtColor = lightTheme ? color.black : color.white
 
 if longCondition
     label.new(bar_index, high, "BUY ▲ " + str.tostring(close, format.mintick) + "  SL: " + str.tostring(slLongLevel, format.mintick), style=label.style_label_down, color=color.new(color.green, 80), textcolor=labelTxtColor, size=size.small)
