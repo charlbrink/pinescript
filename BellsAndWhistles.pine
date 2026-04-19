@@ -5,8 +5,11 @@ indicator("Bells and Whistles Indicator Set", overlay=true)
 signalLen = input.int(9,  "Signal EMA (Fast)")
 trendLen  = input.int(21, "Trend EMA (Slow)")
 volLen    = input.int(20, "Volume MA Length")
-atrMult       = input.float(2.0, "ATR Stop Multiplier", step=0.5)
-lightTheme    = input.bool(false, "Light Theme")
+atrMult    = input.float(2.0, "ATR Stop Multiplier", step=0.5)
+lightTheme = input.bool(false, "Light Theme")
+showMFI    = input.bool(true,  "Show MFI Diamonds")
+showADX    = input.bool(true,  "Show ADX/DMI Dots")
+showDMI    = input.bool(true,  "Show DMI Crossovers")
 
 // --- CALCULATIONS ---
 emaSignal = ta.ema(close, signalLen)
@@ -146,15 +149,15 @@ plotshape(true, style=shape.circle,  location=location.top,      color=vwapBiasC
 
 // MFI bias diamond — below the candle
 mfiDotColor = mfi > 80 ? color.new(color.orange, 20) : mfi > 50 ? color.new(color.green, 20) : color.new(color.red, 20)
-plotshape(true, style=shape.diamond, location=location.belowbar, color=mfiDotColor, size=size.tiny, title="MFI Bias")
+plotshape(showMFI, style=shape.diamond, location=location.belowbar, color=mfiDotColor, size=size.tiny, title="MFI Bias")
 
 // ADX/DMI — Option 1: directional strength dot
 adxDotColor = adxBullish ? color.new(color.green, 20) : adxBearish ? color.new(color.red, 20) : color.new(color.gray, 40)
-plotshape(true, style=shape.circle,  location=location.abovebar, color=adxDotColor,                  size=size.tiny,  title="ADX/DMI Bias")
+plotshape(showADX, style=shape.circle, location=location.abovebar, color=adxDotColor, size=size.tiny, title="ADX/DMI Bias")
 
-// ADX/DMI — Option 3: +DI/-DI crossover squares (only when ADX > 25)
-plotshape(dmiCrossUp,   style=shape.xcross, location=location.belowbar, color=color.new(color.green, 20), size=size.small, title="DMI Cross Up")
-plotshape(dmiCrossDown, style=shape.xcross, location=location.abovebar, color=color.new(color.red,   20), size=size.small, title="DMI Cross Down")
+// ADX/DMI — Option 3: +DI/-DI crossover xcross (only when ADX > 25)
+plotshape(showDMI and dmiCrossUp,   style=shape.xcross, location=location.belowbar, color=color.new(color.green, 20), size=size.small, title="DMI Cross Up")
+plotshape(showDMI and dmiCrossDown, style=shape.xcross, location=location.abovebar, color=color.new(color.red,   20), size=size.small, title="DMI Cross Down")
 
 // ADX/DMI — Option 4: live ADX readout label
 if barstate.islast
