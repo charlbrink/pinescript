@@ -15,6 +15,8 @@ A breakdown of every technical component used in the indicator, what it measures
 8. [Pivot Points — Support & Resistance](#8-pivot-points--support--resistance)
 9. [ADX & DMI — Trend Strength & Direction](#9-adx--dmi--trend-strength--direction)
 10. [OBV — On Balance Volume](#10-obv--on-balance-volume)
+11. [ATR — Stop Loss](#11-atr--stop-loss)
+12. [Signal Logic — How All Filters Combine](#12-signal-logic--how-all-filters-combine)
 
 ---
 
@@ -58,7 +60,7 @@ EMA (Exponential Moving Average) weights recent prices more heavily than older o
 - Whipsaws in choppy/sideways markets — fast and slow keep crossing with no follow-through
 - A crossover in a tight range carries little weight — context matters
 
-> The EMA crossover is the **trigger**. RSI, MACD, Volume, and VWAP are the **gates**.
+> The EMA crossover is the **trigger**. RSI, MFI, MACD, OBV, and VWAP are the **gates**.
 
 ---
 
@@ -76,9 +78,9 @@ RSI (Relative Strength Index) measures the speed and magnitude of price changes,
 | < 50 | Bearish momentum — sellers in control |
 
 **How it's used in this indicator**
-RSI acts as a momentum gate on EMA crossovers:
-- Crossover fires + RSI > 50 → momentum confirms → **strong signal**
-- Crossover fires + RSI ≤ 50 → momentum does not confirm → **weak/grey signal**
+RSI acts as one of two momentum gates on EMA crossovers, working alongside MFI:
+- Crossover fires + RSI > 50 + MFI > 50 + MACD confirms → **strong signal**
+- Either RSI or MFI fails → crossover is treated as **weak/grey**
 
 **Common strategies**
 - **Overbought/oversold** — works well in ranging markets, unreliable in strong trends where RSI can stay extreme for extended periods
@@ -135,10 +137,12 @@ Because MFI incorporates volume, an overbought reading on high volume carries mo
 - **Divergence** — price makes higher high, MFI makes lower high = smart money not participating in the move despite price rising
 - **Failure at extremes** — MFI reaches > 80 then fails to reclaim it on the next push = exhaustion signal, similar to RSI failure swings
 
-**In the context of this indicator**
-- MFI > 50 is a stronger momentum gate than RSI > 50 alone because it requires volume to confirm the directional move
-- MFI overbought (> 80) on a buy signal = caution, entering into potential exhaustion
-- Combining MFI + RSI both above 50 gives a high-confidence momentum confirmation
+**How it's used in this indicator**
+MFI works alongside RSI as a dual momentum gate — both must confirm for a strong signal:
+- Crossover fires + MFI > 50 + RSI > 50 + MACD confirms → **strong signal**
+- MFI ≤ 50 → crossover demoted to **weak/grey**
+- MFI > 80 on a buy crossover → demoted to **CAUTION ▲** (grey label) — valid momentum but entering into potential exhaustion
+- MFI < 50 + RSI < 50 + MACD confirms → **strong short signal**
 
 **Limitations**
 - Lags — based on a lookback period of past bars
@@ -165,8 +169,8 @@ MACD (Moving Average Convergence Divergence) is a trend-following momentum indic
 
 **How it's used in this indicator**
 Both the signal line cross AND histogram direction must agree:
-- MACD line > signal AND histogram > 0 → **confirms long**
-- MACD line < signal AND histogram < 0 → **confirms short**
+- MACD line > signal AND histogram > 0 → **confirms long** (combined with RSI > 50 and MFI > 50)
+- MACD line < signal AND histogram < 0 → **confirms short** (combined with RSI < 50 and MFI < 50)
 - Either condition fails → crossover is treated as **weak**
 
 **Common strategies**
@@ -205,6 +209,10 @@ Bollinger Bands are a volatility envelope — three lines plotted around price.
 
 **How it's used in this indicator**
 Plotted as a visual reference only — not used to gate signals. The bands show whether price is extended (near the outer bands) or compressed (near the midline) relative to where an EMA crossover fires.
+
+**Visual style**
+- Outer bands (upper/lower) — silver, linewidth 1
+- Middle band — yellow, linewidth 1
 
 **Common strategies**
 - **Mean reversion** — price touches upper band → potential short, lower band → potential long. Works in ranging markets, dangerous in strong trends
@@ -325,17 +333,20 @@ Two lines that show **trend direction**:
 | +DI > −DI | Bulls in control |
 | −DI > +DI | Bears in control |
 
-### Using them together
+**How it's used in this indicator**
+Three visual layers, all configurable via indicator settings:
 
-ADX is derived from the DMI calculation — they're inseparable:
-
-1. +DI crosses above −DI → potential long signal
-2. −DI crosses above +DI → potential short signal
-3. **Only act when ADX > 25** — confirms the trend is real, not noise
-
-A +DI/−DI cross with low ADX is noise. The same cross with ADX > 25 is a meaningful directional signal.
-
-> DMI tells you **which way** the market is moving. ADX tells you **how much to trust it**.
+- **ADX/DMI Bias dot** (toggle: Show ADX/DMI Dots) — plotted above every bar
+  - 🟢 Green = ADX > 25 and +DI > −DI (trending bullish)
+  - 🔴 Red = ADX > 25 and −DI > +DI (trending bearish)
+  - ⚪ Grey = ADX < 25 (no trend / choppy)
+- **DMI Crossover markers** (toggle: Show DMI Crossovers) — xcross shape plotted when +DI crosses −DI, only when ADX > 25
+  - 🟢 Green xcross below bar = +DI crossed above −DI
+  - 🔴 Red xcross above bar = −DI crossed above +DI
+- **Live ADX label** — displayed at the right edge of the chart, colour coded
+  - Green = ADX > 25 (trending)
+  - Yellow = ADX 20–25 (developing)
+  - Red = ADX < 20 (choppy)
 
 ---
 
@@ -367,8 +378,10 @@ Volume precedes price. Smart money accumulates or distributes before price moves
 - **Breakout confirmation** — OBV breaking above a prior high before price does = early signal a price breakout is coming
 
 **In the context of this indicator**
-- OBV divergence can flag weak signals — price making a new high but OBV isn't confirms the move lacks conviction
-- Pairs well with the existing volume dot — volume dot confirms single-bar participation, OBV confirms the cumulative trend of participation over time
+OBV bearish divergence is used to demote long signals:
+- Price reaches a 20-bar high but OBV is below its prior 20-bar high → bearish divergence detected
+- Any `longCondition` that fires during OBV bearish divergence is demoted to **WEAK ▲** (grey)
+- Pairs well with the volume dot — the dot confirms single-bar participation, OBV confirms the cumulative trend of participation over time
 
 **Limitations**
 - The absolute value of OBV is meaningless — only direction and divergence from price matter
@@ -376,3 +389,78 @@ Volume precedes price. Smart money accumulates or distributes before price moves
 - Does not account for where price closed within the bar — a close up 0.01% adds the full bar's volume, same as a close up 5%
 
 > OBV answers the question: *is volume confirming what price is doing, or quietly telling a different story?*
+
+---
+
+## 11. ATR — Stop Loss
+
+ATR (Average True Range) measures the average price range per bar over a lookback period. On the daily timeframe it gives a volatility-adjusted distance to place a stop that accounts for normal daily price movement.
+
+**Calculation**
+```
+True Range  = max(high − low, abs(high − prev close), abs(low − prev close))
+ATR(14)     = 14-period smoothed average of True Range
+Stop dist.  = ATR(14) × multiplier
+```
+
+**How it's used in this indicator**
+- ATR is pulled from the **daily timeframe** regardless of the chart timeframe — gives a consistent stop distance based on daily volatility
+- On a BUY signal: stop level = `close − (ATR × multiplier)`
+- On a SELL signal: stop level = `close + (ATR × multiplier)`
+- A solid red line (long SL) or green line (short SL) is drawn 5 bars forward from the signal bar with an "SL" label at the left end
+- The stop price is also shown in the BUY/SELL label: `BUY ▲ 189.45  SL: 187.20`
+
+**Configurable input**
+- `ATR Stop Multiplier` (default 2.0, step 0.5) — tune per instrument and timeframe
+  - 1.5 = tight stop, suits lower volatility instruments
+  - 2.0 = standard
+  - 3.0 = wide/swing stop, suits higher volatility instruments
+
+**Limitations**
+- ATR is a distance, not a direction — it doesn't tell you if the stop is at a logical price level (e.g. below support)
+- In low volatility periods ATR shrinks, placing stops very tight — can get stopped out on normal noise
+- In high volatility periods ATR expands, placing stops far away — increases risk per trade
+
+---
+
+## 12. Signal Logic — How All Filters Combine
+
+Every signal on the chart is the result of multiple filters agreeing. This section documents exactly what conditions produce each signal type.
+
+**Strong BUY ▲ (green triangle + label)**
+
+All of the following must be true:
+- EMA fast crosses above EMA slow (`crossUp`)
+- RSI(14) > 50
+- MFI(14) > 50
+- MFI(14) ≤ 80 (not overbought)
+- MACD line > signal line AND histogram > 0
+- No OBV bearish divergence (price not at 20-bar high while OBV is below its prior high)
+
+**Strong SELL ▼ (red triangle + label)**
+
+All of the following must be true:
+- EMA fast crosses below EMA slow (`crossDown`)
+- RSI(14) < 50
+- MFI(14) < 50
+- MACD line < signal line AND histogram < 0
+
+**WEAK ▲ / WEAK ▼ (grey triangle + label)**
+
+A crossover fired but one or more filters failed:
+- RSI, MFI, or MACD did not confirm direction
+- OBV bearish divergence detected on a long crossover
+
+**CAUTION ▲ (grey triangle + label)**
+
+A long crossover fired with RSI/MACD confirming but MFI > 80 — momentum is present but buying pressure may be exhausted.
+
+**Visual indicator dots**
+
+| Dot | Location | Meaning |
+|---|---|---|
+| VWAP bias circle | Top of chart | Green = above VWAP, Red = below VWAP, Grey = daily+ timeframe |
+| MFI diamond (toggleable) | Below candle | Green = MFI > 50, Orange = MFI > 80, Red = MFI < 50 |
+| ADX/DMI circle (toggleable) | Above candle | Green = trending bullish, Red = trending bearish, Grey = choppy |
+| Volume circle | Bottom of chart | Teal = current volume above 20-bar average |
+| DMI xcross (toggleable) | Above/below candle | Green = +DI crossed above −DI, Red = −DI crossed above +DI (ADX > 25 only) |
