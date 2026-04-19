@@ -10,6 +10,7 @@ volLen    = input.int(20, "Volume MA Length")
 emaSignal = ta.ema(close, signalLen)
 emaTrend  = ta.ema(close, trendLen)
 rsi       = ta.rsi(close, 14)
+mfi       = ta.mfi(hlc3, 14)
 [macdLine, macdSignal, macdHist] = ta.macd(close, 12, 26, 9)
 
 // ADX / DMI
@@ -44,13 +45,14 @@ crossDown = ta.crossunder(emaSignal, emaTrend)
 macdLong  = macdLine > macdSignal and macdHist > 0
 macdShort = macdLine < macdSignal and macdHist < 0
 
-// Strong only when RSI + MACD confirm AND no OBV bearish divergence
-longCondition  = crossUp   and rsi > 50 and macdLong  and not obvDivBearish
-shortCondition = crossDown and rsi < 50 and macdShort
+// Strong only when RSI + MFI + MACD confirm AND no OBV bearish divergence
+mfiOverbought  = mfi > 80
+longCondition  = crossUp   and rsi > 50 and mfi > 50 and macdLong  and not obvDivBearish and not mfiOverbought
+shortCondition = crossDown and rsi < 50 and mfi < 50 and macdShort
 
-// Weak — RSI/MACD fail OR OBV divergence detected on a long
-weakLong  = crossUp   and not (rsi > 50 and macdLong) or (crossUp and obvDivBearish)
-weakShort = crossDown and not (rsi < 50 and macdShort)
+// Weak — RSI/MFI/MACD fail, OBV divergence, or MFI overbought caution
+weakLong  = crossUp   and not (rsi > 50 and mfi > 50 and macdLong) or (crossUp and obvDivBearish) or (crossUp and mfiOverbought)
+weakShort = crossDown and not (rsi < 50 and mfi < 50 and macdShort)
 
 // --- PIVOT POINTS ---
 prevHigh  = request.security(syminfo.tickerid, "D", high[1],  lookahead=barmerge.lookahead_on)
@@ -106,20 +108,25 @@ if longCondition
 if shortCondition
     label.new(bar_index, high, "SELL ▼ " + str.tostring(close, format.mintick), style=label.style_label_down, color=color.new(color.red,   80), textcolor=color.white, size=size.small)
 if weakLong
-    label.new(bar_index, low,  "WEAK ▲ " + str.tostring(close, format.mintick), style=label.style_label_up,   color=color.new(color.gray,  70), textcolor=color.white, size=size.tiny)
+    cautionTxt = mfiOverbought ? "CAUTION ▲" : "WEAK ▲"
+    label.new(bar_index, low,  cautionTxt + " " + str.tostring(close, format.mintick), style=label.style_label_up,   color=color.new(color.gray,  70), textcolor=color.white, size=size.tiny)
 if weakShort
-    label.new(bar_index, high, "WEAK ▼ " + str.tostring(close, format.mintick), style=label.style_label_down, color=color.new(color.gray,  70), textcolor=color.white, size=size.tiny)
+    label.new(bar_index, high, "WEAK ▼ "   + str.tostring(close, format.mintick), style=label.style_label_down, color=color.new(color.gray,  70), textcolor=color.white, size=size.tiny)
 
 // Volume confirmation dot
 plotshape(volConfirmed, style=shape.circle, location=location.bottom, color=color.new(color.teal, 40), size=size.tiny, title="Volume Confirmed", text="V")
 
 // VWAP bias — always visible, independent of signal
 vwapBiasColor = useVwap ? (close > vwapVal ? color.new(color.green, 20) : color.new(color.red, 20)) : color.new(color.gray, 60)
-plotshape(true, style=shape.circle, location=location.top, color=vwapBiasColor, size=size.tiny, title="VWAP Bias")
+plotshape(true, style=shape.circle,  location=location.top,      color=vwapBiasColor,                size=size.tiny,  title="VWAP Bias")
 
-// ADX/DMI — Option 1: directional strength dot (top row)
+// MFI bias diamond — below the candle
+mfiDotColor = mfi > 80 ? color.new(color.orange, 20) : mfi > 50 ? color.new(color.green, 20) : color.new(color.red, 20)
+plotshape(true, style=shape.diamond, location=location.belowbar, color=mfiDotColor, size=size.tiny, title="MFI Bias")
+
+// ADX/DMI — Option 1: directional strength dot
 adxDotColor = adxBullish ? color.new(color.green, 20) : adxBearish ? color.new(color.red, 20) : color.new(color.gray, 40)
-plotshape(true, style=shape.circle, location=location.abovebar, color=adxDotColor, size=size.tiny, title="ADX/DMI Bias")
+plotshape(true, style=shape.circle,  location=location.abovebar, color=adxDotColor,                  size=size.tiny,  title="ADX/DMI Bias")
 
 // ADX/DMI — Option 3: +DI/-DI crossover squares (only when ADX > 25)
 plotshape(dmiCrossUp,   style=shape.xcross, location=location.belowbar, color=color.new(color.green, 20), size=size.small, title="DMI Cross Up")
