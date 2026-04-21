@@ -168,3 +168,31 @@ if barstate.islast
 
 // Background "Heat" (Current State)
 bgcolor(emaSignal > emaTrend ? color.new(color.green, 95) : color.new(color.red, 95))
+
+// --- ALERTS ---
+jsonBase   = '{"ticker":"' + syminfo.ticker + '","price":' + str.tostring(close, format.mintick) + ',"atr":' + str.tostring(atrDaily, format.mintick)
+
+if longCondition
+    alert(jsonBase + ',"signal":"BUY","sl":' + str.tostring(close - atrStop, format.mintick) + '}', alert.freq_once_per_bar)
+if shortCondition
+    alert(jsonBase + ',"signal":"SELL","sl":' + str.tostring(close + atrStop, format.mintick) + '}', alert.freq_once_per_bar)
+if weakLong and not mfiOverbought
+    alert(jsonBase + ',"signal":"WEAK_BUY","reason":"momentum not confirmed"}', alert.freq_once_per_bar)
+if weakLong and mfiOverbought
+    alert(jsonBase + ',"signal":"CAUTION_BUY","reason":"MFI overbought"}', alert.freq_once_per_bar)
+if weakShort
+    alert(jsonBase + ',"signal":"WEAK_SELL","reason":"momentum not confirmed"}', alert.freq_once_per_bar)
+if dmiCrossUp
+    alert(jsonBase + ',"signal":"DMI_CROSS_UP","diPlus":' + str.tostring(diPlus, "#.00") + ',"diMinus":' + str.tostring(diMinus, "#.00") + ',"adx":' + str.tostring(adx, "#.00") + '}', alert.freq_once_per_bar)
+if dmiCrossDown
+    alert(jsonBase + ',"signal":"DMI_CROSS_DOWN","diPlus":' + str.tostring(diPlus, "#.00") + ',"diMinus":' + str.tostring(diMinus, "#.00") + ',"adx":' + str.tostring(adx, "#.00") + '}', alert.freq_once_per_bar)
+
+alertcondition(longCondition,                   title="BUY Signal",         message="BUY ▲ — check chart for SL level")
+alertcondition(shortCondition,                  title="SELL Signal",        message="SELL ▼ — check chart for SL level")
+alertcondition(weakLong and not mfiOverbought,  title="Weak Buy",           message="WEAK ▲ — momentum not confirmed")
+alertcondition(weakLong and mfiOverbought,      title="Caution Buy",        message="CAUTION ▲ — MFI overbought")
+alertcondition(weakShort,                       title="Weak Sell",          message="WEAK ▼ — momentum not confirmed")
+alertcondition(longCondition or shortCondition, title="Any Strong Signal",  message="Strong signal fired")
+alertcondition(weakLong or weakShort,           title="Any Weak Signal",    message="Weak signal fired")
+alertcondition(dmiCrossUp,                      title="DMI Cross Up",       message="+DI crossed above -DI (ADX > 25)")
+alertcondition(dmiCrossDown,                    title="DMI Cross Down",     message="-DI crossed above +DI (ADX > 25)")
