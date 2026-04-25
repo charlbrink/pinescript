@@ -10,6 +10,7 @@ lightTheme = input.bool(false, "Light Theme")
 showMFI    = input.bool(true,  "Show MFI Diamonds")
 showADX    = input.bool(true,  "Show ADX/DMI Dots")
 showDMI    = input.bool(true,  "Show DMI Crossovers")
+showIchi   = input.bool(true,  "Show Ichimoku Cloud")
 
 // --- CALCULATIONS ---
 emaSignal = ta.ema(close, signalLen)
@@ -17,6 +18,13 @@ emaTrend  = ta.ema(close, trendLen)
 rsi       = ta.rsi(close, 14)
 mfi       = ta.mfi(hlc3, 14)
 [macdLine, macdSignal, macdHist] = ta.macd(close, 12, 26, 9)
+
+// Ichimoku Cloud
+tenkansen   = math.avg(ta.highest(high, 9),  ta.lowest(low, 9))
+kijunsen    = math.avg(ta.highest(high, 26), ta.lowest(low, 26))
+spanA       = math.avg(tenkansen, kijunsen)
+spanB       = math.avg(ta.highest(high, 52), ta.lowest(low, 52))
+chikou      = close
 
 // ADX / DMI
 [diPlus, diMinus, adx] = ta.dmi(14, 14)
@@ -107,6 +115,14 @@ plot(bbLower, "BB Lower", color=color.silver, linewidth=1, style=plot.style_line
 
 // VWAP line (intraday only)
 plot(useVwap ? vwapVal : na, "VWAP", color=color.new(color.purple, 0), linewidth=1)
+
+// Ichimoku Cloud
+plot(showIchi ? tenkansen : na, "Tenkan-sen",  color=color.new(color.fuchsia, 0), linewidth=2, style=plot.style_line)
+plot(showIchi ? kijunsen  : na, "Kijun-sen",   color=color.new(color.orange,  0), linewidth=2, style=plot.style_stepline)
+plot(showIchi ? chikou    : na, "Chikou Span", color=color.new(color.yellow,  0), linewidth=1, offset=-26, style=plot.style_circles)
+iSpanA = plot(showIchi ? spanA : na, "Span A", color=color.new(#00e5ff, 0), linewidth=2, offset=26)
+iSpanB = plot(showIchi ? spanB : na, "Span B", color=color.new(#FF7F50, 0), linewidth=2, offset=26)
+fill(iSpanA, iSpanB, spanA > spanB ? color.new(#00e5ff, 65) : color.new(#FF7F50, 65), title="Ichimoku Cloud")
 
 // Signal Plots
 plotshape(longCondition,  style=shape.triangleup,   location=location.belowbar, color=color.green, size=size.small, title="Buy")

@@ -16,7 +16,8 @@ A breakdown of every technical component used in the indicator, what it measures
 9. [ADX & DMI — Trend Strength & Direction](#9-adx--dmi--trend-strength--direction)
 10. [OBV — On Balance Volume](#10-obv--on-balance-volume)
 11. [ATR — Stop Loss](#11-atr--stop-loss)
-12. [Signal Logic — How All Filters Combine](#12-signal-logic--how-all-filters-combine)
+12. [Ichimoku Cloud](#12-ichimoku-cloud)
+13. [Signal Logic — How All Filters Combine](#13-signal-logic--how-all-filters-combine)
 
 ---
 
@@ -423,7 +424,52 @@ Stop dist.  = ATR(14) × multiplier
 
 ---
 
-## 12. Signal Logic — How All Filters Combine
+## 12. Ichimoku Cloud
+
+The Ichimoku Cloud is a trend-following system with 5 components.
+
+### The Lines
+
+| Line | Color | Description |
+|---|---|---|
+| Tenkan-sen | Fuchsia | 9-period midpoint — the "fast" line. Acts like a short-term moving average. Price crossing it signals short-term momentum shifts |
+| Kijun-sen | Orange | 26-period midpoint — the "slow" line. Acts as dynamic support/resistance. A Tenkan/Kijun crossover is a primary trade signal |
+| Chikou Span | Yellow circles | Today's close plotted 26 bars back. If it's above the price from 26 bars ago = bullish. Below = bearish |
+| Span A | Cyan (`#00e5ff`) | Plotted 26 bars ahead — upper boundary of bullish cloud |
+| Span B | Coral (`#FF7F50`) | Plotted 26 bars ahead — lower boundary of bullish cloud |
+
+### The Cloud (Kumo)
+
+- Span A and Span B are plotted 26 bars into the future
+- The space between them is the cloud
+- Cyan cloud = bullish, coral cloud = bearish
+- Thick cloud = strong support/resistance. Thin cloud = weak, easy to break through
+
+### How to Read Signals
+
+| Condition | Meaning |
+|---|---|
+| Price above cloud | Uptrend |
+| Price below cloud | Downtrend |
+| Price inside cloud | Choppy / neutral |
+| Tenkan crosses above Kijun while price is above cloud | Strong buy |
+| Tenkan crosses below Kijun while price is below cloud | Strong sell |
+| Crossover inside the cloud | Weak / unreliable signal |
+| Chikou above price from 26 bars ago | Bullish momentum confirmed |
+
+### Confluence with This Indicator
+
+The strongest setups occur when all of the following align:
+- Green BUY triangle fires
+- Price is above the cyan cloud
+- Chikou is above its reference price
+- ADX dot is green (trending bullish)
+
+All 4 aligning is a high-conviction entry.
+
+---
+
+## 13. Signal Logic — How All Filters Combine
 
 Every signal on the chart is the result of multiple filters agreeing. This section documents exactly what conditions produce each signal type.
 
