@@ -434,7 +434,7 @@ The Ichimoku Cloud is a trend-following system with 5 components.
 |---|---|---|
 | Tenkan-sen | Fuchsia | 9-period midpoint — the "fast" line. Acts like a short-term moving average. Price crossing it signals short-term momentum shifts |
 | Kijun-sen | Orange | 26-period midpoint — the "slow" line. Acts as dynamic support/resistance. A Tenkan/Kijun crossover is a primary trade signal |
-| Chikou Span | Yellow circles | Today's close plotted 26 bars back. If it's above the price from 26 bars ago = bullish. Below = bearish |
+| Chikou Span | Lime green | Today's close plotted 26 bars back. If it's above the price from 26 bars ago = bullish. Below = bearish |
 | Span A | Cyan (`#00e5ff`) | Plotted 26 bars ahead — upper boundary of bullish cloud |
 | Span B | Coral (`#FF7F50`) | Plotted 26 bars ahead — lower boundary of bullish cloud |
 
