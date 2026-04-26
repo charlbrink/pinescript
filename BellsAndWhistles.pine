@@ -12,6 +12,7 @@ showADX    = input.bool(true,  "Show ADX/DMI Dots")
 showDMI    = input.bool(true,  "Show DMI Crossovers")
 showIchi   = input.bool(true,  "Show Ichimoku Cloud")
 showBB     = input.bool(true,  "Show Bollinger Bands")
+showVolColor = input.bool(true, "Show Volume-Colored Candles")
 
 // --- CALCULATIONS ---
 emaSignal = ta.ema(close, signalLen)
@@ -124,6 +125,12 @@ plot(showIchi ? chikou    : na, "Chikou Span", color=color.new(color.lime, 0), l
 iSpanA = plot(showIchi ? spanA : na, "Span A", color=color.new(#00e5ff, 0), linewidth=2, offset=26)
 iSpanB = plot(showIchi ? spanB : na, "Span B", color=color.new(#FF7F50, 0), linewidth=2, offset=26)
 fill(iSpanA, iSpanB, spanA > spanB ? color.new(#00e5ff, 65) : color.new(#FF7F50, 65), title="Ichimoku Cloud")
+
+// Volume-colored candles
+volRatio = volume / volMA
+volAlpha = math.max(0, math.min(90, int(90 - (volRatio * 60))))
+candleColor = showVolColor ? (close >= open ? color.new(color.green, volAlpha) : color.new(color.red, volAlpha)) : na
+barcolor(candleColor)
 
 // Signal Plots
 plotshape(longCondition,  style=shape.triangleup,   location=location.belowbar, color=color.green, size=size.small, title="Buy")
