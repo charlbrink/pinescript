@@ -128,21 +128,28 @@ iSpanB = plot(showIchi ? spanB : na, "Span B", color=color.new(#FF7F50, 0), line
 fill(iSpanA, iSpanB, spanA > spanB ? color.new(#00e5ff, 65) : color.new(#FF7F50, 65), title="Ichimoku Cloud")
 
 // Fibonacci Golden Pocket
-var float fibHigh = na
-var float fibLow  = na
+var float fibHigh    = na
+var float fibLow     = na
+var int   fibHighBar = na
+var int   fibLowBar  = na
 pivHigh = ta.pivothigh(high, 21, 21)
 pivLow  = ta.pivotlow(low,   21, 21)
 if not na(pivHigh)
-    fibHigh := pivHigh
+    fibHigh    := pivHigh
+    fibHighBar := bar_index
 if not na(pivLow)
-    fibLow  := pivLow
+    fibLow    := pivLow
+    fibLowBar := bar_index
 
+fibBullish = not na(fibHighBar) and not na(fibLowBar) and fibLowBar > fibHighBar
 fib382 = not na(fibHigh) and not na(fibLow) ? fibLow + (fibHigh - fibLow) * 0.382 : na
 fib618 = not na(fibHigh) and not na(fibLow) ? fibLow + (fibHigh - fibLow) * 0.618 : na
+fibColor     = fibBullish ? color.new(color.yellow, 40)  : color.new(color.orange, 40)
+fibFillColor = fibBullish ? color.new(color.yellow, 80)  : color.new(color.orange, 80)
 
-pFib382 = plot(showFib ? fib382 : na, "Fib 0.382", color=color.new(color.yellow, 40), linewidth=1, style=plot.style_line)
-pFib618 = plot(showFib ? fib618 : na, "Fib 0.618", color=color.new(color.yellow, 40), linewidth=1, style=plot.style_line)
-fill(pFib382, pFib618, showFib ? color.new(color.yellow, 80) : na, title="Golden Pocket")
+pFib382 = plot(showFib ? fib382 : na, "Fib 0.382", color=fibColor, linewidth=1, style=plot.style_line)
+pFib618 = plot(showFib ? fib618 : na, "Fib 0.618", color=fibColor, linewidth=1, style=plot.style_line)
+fill(pFib382, pFib618, showFib ? fibFillColor : na, title="Golden Pocket")
 
 // Volume-colored candles
 volRatio = volume / volMA
