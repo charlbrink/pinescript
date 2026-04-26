@@ -13,6 +13,7 @@ showDMI    = input.bool(true,  "Show DMI Crossovers")
 showIchi   = input.bool(true,  "Show Ichimoku Cloud")
 showBB     = input.bool(true,  "Show Bollinger Bands")
 showVolColor = input.bool(true, "Show Volume-Colored Candles")
+showFib      = input.bool(true, "Show Fibonacci Golden Pocket")
 
 // --- CALCULATIONS ---
 emaSignal = ta.ema(close, signalLen)
@@ -126,6 +127,23 @@ iSpanA = plot(showIchi ? spanA : na, "Span A", color=color.new(#00e5ff, 0), line
 iSpanB = plot(showIchi ? spanB : na, "Span B", color=color.new(#FF7F50, 0), linewidth=2, offset=26)
 fill(iSpanA, iSpanB, spanA > spanB ? color.new(#00e5ff, 65) : color.new(#FF7F50, 65), title="Ichimoku Cloud")
 
+// Fibonacci Golden Pocket
+var float fibHigh = na
+var float fibLow  = na
+pivHigh = ta.pivothigh(high, 21, 21)
+pivLow  = ta.pivotlow(low,   21, 21)
+if not na(pivHigh)
+    fibHigh := pivHigh
+if not na(pivLow)
+    fibLow  := pivLow
+
+fib382 = not na(fibHigh) and not na(fibLow) ? fibLow + (fibHigh - fibLow) * 0.382 : na
+fib618 = not na(fibHigh) and not na(fibLow) ? fibLow + (fibHigh - fibLow) * 0.618 : na
+
+pFib382 = plot(showFib ? fib382 : na, "Fib 0.382", color=color.new(color.yellow, 40), linewidth=1, style=plot.style_line)
+pFib618 = plot(showFib ? fib618 : na, "Fib 0.618", color=color.new(color.yellow, 40), linewidth=1, style=plot.style_line)
+fill(pFib382, pFib618, showFib ? color.new(color.yellow, 80) : na, title="Golden Pocket")
+
 // Volume-colored candles
 volRatio = volume / volMA
 volAlpha = math.max(0, math.min(90, int(90 - (volRatio * 60))))
@@ -188,7 +206,7 @@ plotshape(showDMI and dmiCrossDown, style=shape.xcross, location=location.aboveb
 // ADX/DMI — Option 4: live ADX readout label
 if barstate.islast
     adxLabelColor = adx > 25 ? color.green : adx > 20 ? color.yellow : color.red
-    label.new(bar_index + 2, high, "ADX: " + str.tostring(adx, "#.0"), style=label.style_label_left, color=color.new(adxLabelColor, 70), textcolor=color.white, size=size.tiny)
+    label.new(bar_index + 2, high, "ADX: " + str.tostring(adx, "#.0"), style=label.style_label_left, color=color.new(adxLabelColor, 70), textcolor=labelTxtColor, size=size.tiny)
 
 // Background "Heat" (Current State)
 bgcolor(emaSignal > emaTrend ? color.new(color.green, 95) : color.new(color.red, 95))

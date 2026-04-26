@@ -16,8 +16,9 @@ A breakdown of every technical component used in the indicator, what it measures
 9. [ADX & DMI — Trend Strength & Direction](#9-adx--dmi--trend-strength--direction)
 10. [OBV — On Balance Volume](#10-obv--on-balance-volume)
 11. [ATR — Stop Loss](#11-atr--stop-loss)
-12. [Ichimoku Cloud](#12-ichimoku-cloud)
-13. [Signal Logic — How All Filters Combine](#13-signal-logic--how-all-filters-combine)
+12. [Fibonacci — Golden Pocket](#12-fibonacci--golden-pocket)
+13. [Ichimoku Cloud](#13-ichimoku-cloud)
+14. [Signal Logic — How All Filters Combine](#14-signal-logic--how-all-filters-combine)
 
 ---
 
@@ -424,7 +425,38 @@ Stop dist.  = ATR(14) × multiplier
 
 ---
 
-## 12. Ichimoku Cloud
+## 12. Fibonacci — Golden Pocket
+
+Fibonacci retracement levels are horizontal zones derived from the Fibonacci sequence, used to identify where price is likely to find support or resistance during a pullback.
+
+**The Golden Pocket (0.382–0.618)**
+
+The 0.382–0.618 zone is the most consistently traded retracement range across timeframes and instruments. It represents the area where price most commonly pauses or reverses during a healthy pullback before continuing in the trend direction.
+
+| Level | Meaning |
+|---|---|
+| 0.382 | Shallow retracement — trend is strong, buyers stepping in early |
+| 0.5 | Mid-point retracement — common pause zone |
+| 0.618 | Deep retracement — last line of defence before trend is considered broken |
+
+**How it's used in this indicator**
+- Pivot highs and lows are auto-detected using a 21-bar lookback on each side via `ta.pivothigh` / `ta.pivotlow`
+- The most recent pivot high and low define the swing range
+- 0.382 and 0.618 levels are calculated from that range and plotted as yellow lines
+- The zone between them is filled in yellow — this is the golden pocket
+- Toggle via "Show Fibonacci Golden Pocket" in settings
+
+**Note on lag**
+Because pivot detection requires 21 bars on each side to confirm, levels update 21 bars after a new swing forms. This is the tradeoff for using a significant lookback — fewer false swings, but slightly delayed.
+
+**Signal quality near the golden pocket**
+- BUY signal firing inside the golden pocket during an uptrend = high-conviction entry — price pulled back into the expected retracement zone and indicators confirmed
+- SELL signal firing inside the golden pocket during a downtrend = same logic in reverse
+- A signal firing well outside the zone carries more risk
+
+---
+
+## 13. Ichimoku Cloud
 
 The Ichimoku Cloud is a trend-following system with 5 components.
 
@@ -469,7 +501,7 @@ All 4 aligning is a high-conviction entry.
 
 ---
 
-## 13. Signal Logic — How All Filters Combine
+## 14. Signal Logic — How All Filters Combine
 
 Every signal on the chart is the result of multiple filters agreeing. This section documents exactly what conditions produce each signal type.
 
