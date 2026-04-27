@@ -1,5 +1,8 @@
 //@version=5
-strategy("Bells and Whistles Strategy", overlay=true, default_qty_type=strategy.fixed, default_qty_value=1, initial_capital=10000, commission_type=strategy.commission.percent, commission_value=0.1)
+strategy("Bells and Whistles Strategy", overlay=true,
+     default_qty_type=strategy.fixed, default_qty_value=1,
+     initial_capital=10000,
+     commission_type=strategy.commission.percent, commission_value=0.1)
 
 // --- INPUTS ---
 signalLen = input.int(9,   "Signal EMA (Fast)")
@@ -20,9 +23,9 @@ emaSignal = ta.ema(dClose, signalLen)
 emaTrend  = ta.ema(dClose, trendLen)
 rsi       = ta.rsi(dClose, 14)
 mfi       = ta.mfi(dHlc3, 14)
-[macdLine, macdSignal, macdHist] = ta.macd(dClose, 12, 26, 9)
+[macdLine, macdSig, macdHist] = ta.macd(dClose, 12, 26, 9)
 
-obv           = ta.obv
+obv           = request.security(syminfo.tickerid, "W", ta.obv)
 obvHigh       = ta.highest(obv, 20)
 priceMadeHigh = dClose >= ta.highest(dClose, 20)
 obvDivBearish = priceMadeHigh and obv < obvHigh[1]
@@ -32,19 +35,20 @@ atrStop = request.security(syminfo.tickerid, "W", ta.atr(14)) * atrMult
 crossUp   = ta.crossover(emaSignal,  emaTrend)
 crossDown = ta.crossunder(emaSignal, emaTrend)
 
-macdLong  = macdLine > macdSignal and macdHist > 0
-macdShort = macdLine < macdSignal and macdHist < 0
+macdLong  = macdLine > macdSig and macdHist > 0
+macdShort = macdLine < macdSig and macdHist < 0
 
 mfiOverbought  = mfi > 80
-longCondition  = crossUp   and rsi > 50 and mfi > 50 and macdLong and not obvDivBearish and not mfiOverbought
+longCondition  = crossUp and rsi > 50 and mfi > 50 and macdLong
+     and not obvDivBearish and not mfiOverbought
 shortCondition = crossDown and rsi < 50 and mfi < 50 and macdShort
 
 // --- STRATEGY ---
-qty = math.floor(orderSize / close)
+qty = math.floor(orderSize / dClose)
 
 if longCondition and strategy.position_size == 0
     strategy.entry("Long", strategy.long, qty=qty)
-    strategy.exit("Long SL", from_entry="Long", stop=close - atrStop)
+    strategy.exit("Long SL", from_entry="Long", stop=dClose - atrStop)
 
 if shortCondition and strategy.position_size > 0
     strategy.close("Long", comment="Sell Signal")
@@ -52,7 +56,9 @@ if shortCondition and strategy.position_size > 0
 // --- VISUALS ---
 p1 = plot(emaSignal, "Fast EMA", color=color.new(color.aqua,   0), linewidth=2)
 p2 = plot(emaTrend,  "Slow EMA", color=color.new(color.orange, 0), linewidth=2)
-fill(p1, p2, emaSignal > emaTrend ? color.new(color.green, 65) : color.new(color.red, 65), title="Trend Ribbon")
+fill(p1, p2,
+     emaSignal > emaTrend ? color.new(color.green, 65) : color.new(color.red, 65),
+     title="Trend Ribbon")
 
 plotshape(longCondition,  style=shape.triangleup,   location=location.belowbar, color=color.green, size=size.small, title="Buy")
 plotshape(shortCondition, style=shape.triangledown, location=location.abovebar, color=color.red,   size=size.small, title="Sell")
